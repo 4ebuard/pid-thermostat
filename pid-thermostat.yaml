@@ -83,9 +83,9 @@ trigger:
     seconds: "/10"
 
 variables:
-  kP: !input kP
-  kI: !input kI
-  kD: !input kD
+  kP: "{{ !input kP | float }}"
+  kI: "{{ !input kI | float }}"
+  kD: "{{ !input kD | float }}"
 
   temp_sensor_entity: !input temp_sensor
   target_temp_entity: !input target_temp
@@ -107,7 +107,7 @@ variables:
     {% elif value > 100 %} 100
     {% else %} {{ value }}
     {% endif %}
-    
+
 action:
   - choose:
       - conditions:
