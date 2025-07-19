@@ -39,6 +39,17 @@ blueprint:
           max: 60
           step: 0.5
 
+    integral_var:
+      name: Переменная интеграла (input_number)
+      selector:
+        entity:
+          domain: input_number
+
+    last_error_var:
+      name: Переменная последней ошибки (input_number)
+      selector:
+        entity:
+          domain: input_number
     kP:
       name: P-коэффициент PID
       description: P (пропорциональная) - реагирует на текущую ошибку
@@ -77,21 +88,17 @@ trigger:
     seconds: "/10"
 
 variables:
-  current_temp: "{{ states(temp_sensor) | float }}"
-  target_temp: "{{ states(target_temp) | float }}"
-  last_temp: "{{ current_temp }}"
-  integral: 0
-  max_integral: 1000
-  pid_output: >
-    {% set error = target_temp - current_temp %}
-    {% set integral = integral + error * check_interval %}
-    {% set integral = [max_integral, integral] | min %}
-    {% set integral = [-max_integral, integral] | max %}
-    {% set derivative = (current_temp - last_temp) / check_interval %}
-    {% set output = (kP * error - kI * integral - kD * derivative) | round(0) %}
-    {% if output < 0 %} 0
-    {% elif output > 100 %} 100
-    {% else %} {{ output }}
+  current_temp: "{{ states( temp_sensor ) | float(0) }}"
+  target: "{{ target_temp }}"
+  error: "{{ target - current_temp }}"
+  prev_error: "{{ states( last_error_var ) | float(0) }}"
+  integral: "{{ states( integral_var ) | float(0) + error * 10 }}"   # 10 сек интервал
+  derivative: "{{ (error - prev_error) / 10 }}"
+  output: >
+    {% set value = (kP * error + kI * integral + kD * derivative) | round(0) %}
+    {% if value < 0 %} 0
+    {% elif value > 100 %} 100
+    {% else %} {{ value }}
     {% endif %}
 
 action:
@@ -118,3 +125,54 @@ action:
               entity_id: "{{ ir_dimmer }}"
             data:
               brightness_pct: "{{ pid_output }}"
+              
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ current_temp >= max_temp }}"
+        sequence:
+          - service: light.turn_off
+            target:
+              entity_id: !input ir_dimmer
+          - service: input_number.set_value
+            data:
+              entity_id: !input integral_var
+              value: 0
+          - service: input_number.set_value
+            data:
+              entity_id: !input last_error_var
+              value: 0
+          - service: system_log.write
+            data:
+              level: warning
+              message: "🚨 PID Thermostat: Температура {{ current_temp }}°C >= {{ max_temp }}°C — аварийное выключение."
+
+      - conditions:
+          - condition: template
+            value_template: "{{ current_temp < max_temp }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input ir_dimmer
+            data:
+              brightness_pct: "{{ output }}"
+
+          - service: input_number.set_value
+            data:
+              entity_id: !input integral_var
+              value: "{{ integral | round(2) }}"
+
+          - service: input_number.set_value
+            data:
+              entity_id: !input last_error_var
+              value: "{{ error | round(2) }}"
+
+          - service: system_log.write
+            data:
+              level: info
+              message: >
+                PID Thermostat: T={{ current_temp }}°C,
+                Target={{ target }}°C,
+                Error={{ error | round(2) }},
+                Out={{ output }}%.
