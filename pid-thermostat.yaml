@@ -86,6 +86,7 @@ variables:
   kP: !input kP
   kI: !input kI
   kD: !input kD
+
   temp_sensor_entity: !input temp_sensor
   target_temp_entity: !input target_temp
   last_error_entity: !input last_error_var
@@ -95,17 +96,18 @@ variables:
 
   current_temp: "{{ states(temp_sensor_entity) | float(0) }}"
   target: "{{ states(target_temp_entity) | float(0) }}"
-  error: "{{ target - current_temp }}"
+  error: "{{ (states(target_temp_entity) | float(0)) - (states(temp_sensor_entity) | float(0)) }}"
   prev_error: "{{ states(last_error_entity) | float(0) }}"
-  integral: "{{ states(integral_entity) | float(0) + error * 10 }}"
+  integral: "{{ (states(integral_entity) | float(0)) + error * 10 }}"
   derivative: "{{ (error - prev_error) / 10 }}"
+
   output: >
     {% set value = (kP * error + kI * integral + kD * derivative) | round(0) %}
     {% if value < 0 %} 0
     {% elif value > 100 %} 100
     {% else %} {{ value }}
     {% endif %}
-
+    
 action:
   - choose:
       - conditions:
