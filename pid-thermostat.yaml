@@ -94,11 +94,11 @@ variables:
   ir_dimmer_entity: !input ir_dimmer
   max_temp_value: !input max_temp
 
-  current_temp: "{{ states(temp_sensor_entity) | float(0) }}"
-  target: "{{ states(target_temp_entity) | float(0) }}"
-  error: "{{ (states(target_temp_entity) | float(0)) - (states(temp_sensor_entity) | float(0)) }}"
-  prev_error: "{{ states(last_error_entity) | float(0) }}"
-  integral: "{{ (states(integral_entity) | float(0)) + error * 10 }}"
+  current_temp: "{{ states(temp_sensor_entity) | float }}"
+  target: "{{ states(target_temp_entity) | float }}"
+  error: "{{ (states(target_temp_entity) | float) - (states(temp_sensor_entity) | float) }}"
+  prev_error: "{{ states(last_error_entity) | float }}"
+  integral: "{{ (states(integral_entity) | float) + error * 10 }}"
   derivative: "{{ (error - prev_error) / 10 }}"
 
   output: >
