@@ -79,7 +79,7 @@ blueprint:
 
 mode: restart
 trigger:
-  - platform: time_pattern
+  - platform: time
     seconds: "/{{ check_interval | int }}"
 
 variables:
