@@ -83,12 +83,15 @@ trigger:
     seconds: "/10"
 
 variables:
-  current_temp: "{{ states( temp_sensor ) | float(0) }}"
-  target: "{{ target_temp }}"
+  current_temp: "{{ states( !input temp_sensor ) | float(0) }}"
+  target: "{{ !input target_temp }}"
   error: "{{ target - current_temp }}"
-  prev_error: "{{ states( last_error_var ) | float(0) }}"
-  integral: "{{ states( integral_var ) | float(0) + error * 10 }}"   # 10 сек интервал
+  prev_error: "{{ states( !input last_error_var ) | float(0) }}"
+  integral: "{{ states( !input integral_var ) | float(0) + error * 10 }}"   # 10 сек интервал
   derivative: "{{ (error - prev_error) / 10 }}"
+  kP: !input kP
+  kI: !input kI
+  kD: !input kD
   output: >
     {% set value = (kP * error + kI * integral + kD * derivative) | round(0) %}
     {% if value < 0 %} 0
