@@ -20,14 +20,9 @@ blueprint:
 
     target_temp:
       name: Уставка температуры (°C)
-      default: 39
       selector:
-        number:
-          min: 30.0
-          max: 42.0
-          step: 0.2
-          unit_of_measurement: "°C"
-          mode: slider
+        entity:
+          domain: input_number
 
     max_temp:
       name: Максимальная температура (°C)
