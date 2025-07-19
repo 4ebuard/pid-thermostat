@@ -80,7 +80,7 @@ blueprint:
 mode: restart
 trigger:
   - platform: time_pattern
-    seconds: /{{ check_interval }}
+    seconds: "/{{ check_interval | int }}"
 
 variables:
   current_temp: "{{ states(temp_sensor) | float }}"
