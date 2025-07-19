@@ -62,7 +62,7 @@ blueprint:
     kD:
       name: D-коэффициент PID
       description: D (дифференциальная) - предсказывает будущие изменения
-      default: 5
+      default: 0
       selector:
         number:
           min: 0.01
