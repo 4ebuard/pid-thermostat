@@ -1,7 +1,7 @@
 blueprint:
   name: PID-thermostat
   description: >
-    Плавное управление диммером (ИК-лампой) для поддержания температуры в террариуме.
+    Tunable PID thermostat based on IR-lamp, ZB dimmer and temperature sensor
 
   domain: automation
   input:
